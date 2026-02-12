@@ -84,3 +84,8 @@ python main.py
 - Ingestの `doPost` は 1リクエスト1回の追記のみ
 - Dashboardの `getReadings` は末尾ウィンドウ読み取り + 段階的拡張
 - Dashboardの `getReadings` は `CacheService` による短期キャッシュを利用
+
+---
+
+## 参考にした記事
+- https://zenn.dev/team_soda/articles/switch-bot-meter-pro-co2-ble
