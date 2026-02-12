@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SwitchBot ダッシュボード</title>
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg0: #0b1020;
+      --bg1: #0e1630;
+      --card: rgba(255, 255, 255, 0.06);
+      --card-strong: rgba(255, 255, 255, 0.09);
+      --border: rgba(255, 255, 255, 0.14);
+      --shadow: 0 16px 50px rgba(0, 0, 0, 0.35);
+      --fg: rgba(255, 255, 255, 0.92);
+      --muted: rgba(255, 255, 255, 0.70);
+      --faint: rgba(255, 255, 255, 0.55);
+      --grid: rgba(255, 255, 255, 0.10);
+      --accent: #7c3aed;
+      --accent2: #22c55e;
+      --danger: #ef4444;
+      --warn: #f59e0b;
+      --ring: rgba(124, 58, 237, 0.40);
+      --radius: 18px;
+      --radius-sm: 12px;
+      --control-h: 40px;
+    }
+
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg0: #f7f8ff;
+        --bg1: #eef2ff;
+        --card: rgba(255, 255, 255, 0.70);
+        --card-strong: rgba(255, 255, 255, 0.86);
+        --border: rgba(15, 23, 42, 0.12);
+        --shadow: 0 18px 60px rgba(15, 23, 42, 0.10);
+        --fg: rgba(15, 23, 42, 0.92);
+        --muted: rgba(15, 23, 42, 0.72);
+        --faint: rgba(15, 23, 42, 0.58);
+        --grid: rgba(15, 23, 42, 0.10);
+        --accent: #6d28d9;
+        --accent2: #16a34a;
+        --danger: #dc2626;
+        --warn: #d97706;
+        --ring: rgba(109, 40, 217, 0.20);
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      height: 100%;
+    }
+
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      color: var(--fg);
+      background:
+        radial-gradient(1000px 600px at 10% 10%, rgba(124, 58, 237, 0.25), transparent 60%),
+        radial-gradient(900px 500px at 90% 15%, rgba(34, 197, 94, 0.18), transparent 55%),
+        linear-gradient(160deg, var(--bg0), var(--bg1));
+    }
+
+    .app {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 20px 16px 32px;
+    }
+
+    .topbar {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .title {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0.2px;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .subtitle {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--accent2);
+      box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.18);
+      flex: 0 0 auto;
+    }
+
+    .panel {
+      border: 1px solid var(--border);
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
+      padding: 14px;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      gap: 12px;
+      align-items: end;
+    }
+
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    label {
+      font-size: 12px;
+      color: var(--muted);
+      user-select: none;
+    }
+
+    select,
+    input[type="number"],
+    input[type="datetime-local"] {
+      height: var(--control-h);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--card-strong);
+      color: var(--fg);
+      padding: 0 12px;
+      outline: none;
+      box-shadow: 0 1px 0 rgba(255, 255, 255, 0.06) inset;
+      min-width: 0;
+    }
+
+    input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--accent);
+      margin: 0;
+    }
+
+    select:focus,
+    input:focus {
+      box-shadow: 0 0 0 4px var(--ring);
+      border-color: rgba(124, 58, 237, 0.45);
+    }
+
+    input[disabled] {
+      opacity: 0.55;
+    }
+
+    .toggle {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      height: var(--control-h);
+      padding: 0 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--card-strong);
+    }
+
+    .toggle span {
+      font-size: 13px;
+      color: var(--fg);
+    }
+
+    button {
+      height: var(--control-h);
+      border-radius: 12px;
+      border: 1px solid rgba(124, 58, 237, 0.35);
+      color: white;
+      background: linear-gradient(135deg, rgba(124, 58, 237, 0.95), rgba(79, 70, 229, 0.95));
+      box-shadow: 0 12px 30px rgba(124, 58, 237, 0.22);
+      padding: 0 14px;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+      cursor: pointer;
+      outline: none;
+      transition: transform 120ms ease, box-shadow 120ms ease, filter 120ms ease;
+      white-space: nowrap;
+    }
+
+    button:hover {
+      filter: brightness(1.03);
+      transform: translateY(-1px);
+      box-shadow: 0 16px 40px rgba(124, 58, 237, 0.28);
+    }
+
+    button:active {
+      transform: translateY(0);
+      filter: brightness(0.98);
+    }
+
+    .kpis {
+      display: grid;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .kpi {
+      border: 1px solid var(--border);
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
+      padding: 14px;
+      overflow: hidden;
+      position: relative;
+      min-height: 86px;
+    }
+
+    .kpi::before {
+      content: "";
+      position: absolute;
+      inset: -60px -40px auto auto;
+      width: 160px;
+      height: 160px;
+      border-radius: 999px;
+      background: radial-gradient(circle at 30% 30%, rgba(124, 58, 237, 0.35), transparent 55%);
+      transform: rotate(25deg);
+      pointer-events: none;
+    }
+
+    .kpi .kpi-label {
+      color: var(--muted);
+      font-size: 12px;
+      margin: 0;
+    }
+
+    .kpi .kpi-value {
+      margin: 8px 0 0;
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: -0.4px;
+      display: flex;
+      gap: 8px;
+      align-items: baseline;
+      line-height: 1.15;
+    }
+
+    .kpi .kpi-unit {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .kpi .kpi-meta {
+      margin: 10px 0 0;
+      color: var(--faint);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .kpi-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--muted);
+      margin-left: auto;
+    }
+
+    .kpi-badge.ok {
+      color: rgba(34, 197, 94, 0.95);
+      border-color: rgba(34, 197, 94, 0.35);
+      background: rgba(34, 197, 94, 0.10);
+    }
+
+    .kpi-badge.warn {
+      color: rgba(245, 158, 11, 0.95);
+      border-color: rgba(245, 158, 11, 0.35);
+      background: rgba(245, 158, 11, 0.10);
+    }
+
+    .kpi-badge.bad {
+      color: rgba(239, 68, 68, 0.95);
+      border-color: rgba(239, 68, 68, 0.35);
+      background: rgba(239, 68, 68, 0.10);
+    }
+
+    .graphs {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .graph-card {
+      border: 1px solid var(--border);
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
+      padding: 10px;
+    }
+
+    .graph {
+      width: 100%;
+      min-height: 340px;
+    }
+
+    /* Plotly modebar styling (subtle on both themes) */
+    .js-plotly-plot .plotly .modebar {
+      background: transparent !important;
+    }
+
+    .js-plotly-plot .plotly .modebar-btn path {
+      fill: var(--muted) !important;
+    }
+
+    .js-plotly-plot .plotly .modebar-btn:hover path {
+      fill: var(--fg) !important;
+    }
+
+    .grid-span-12 {
+      grid-column: span 12 / span 12;
+    }
+
+    .grid-span-6 {
+      grid-column: span 12 / span 12;
+    }
+
+    .grid-span-4 {
+      grid-column: span 12 / span 12;
+    }
+
+    .grid-span-3 {
+      grid-column: span 12 / span 12;
+    }
+
+    /* Tablet: 2-column layout for compact areas */
+    @media (min-width: 520px) {
+      .topbar {
+        align-items: center;
+      }
+
+      .grid-span-3 {
+        grid-column: span 6 / span 6;
+      }
+
+      .grid-span-4 {
+        grid-column: span 6 / span 6;
+      }
+
+      .grid-span-6,
+      .grid-span-12 {
+        grid-column: span 12 / span 12;
+      }
+    }
+
+    /* Mobile: stack header + increase touch comfort */
+    @media (max-width: 520px) {
+      .app {
+        padding: 16px 12px 26px;
+      }
+
+      .topbar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+      }
+
+      .title {
+        font-size: 18px;
+      }
+
+      .pill {
+        width: 100%;
+        justify-content: center;
+      }
+
+      .controls {
+        grid-template-columns: 1fr;
+      }
+
+      .toggle {
+        justify-content: space-between;
+      }
+
+      button {
+        width: 100%;
+      }
+
+      .graph {
+        min-height: 300px;
+      }
+    }
+
+    @media (max-width: 380px) {
+      .kpi .kpi-value {
+        font-size: 22px;
+      }
+
+      .graph {
+        min-height: 270px;
+      }
+    }
+
+    @media (min-width: 860px) {
+      .grid-span-6 {
+        grid-column: span 6 / span 6;
+      }
+
+      .grid-span-4 {
+        grid-column: span 4 / span 4;
+      }
+
+      .grid-span-3 {
+        grid-column: span 3 / span 3;
+      }
+    }
+
+    .hint {
+      color: var(--faint);
+      font-size: 12px;
+      margin: 10px 0 0;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div>
+        <h1 class="title">SwitchBot CO₂ ダッシュボード</h1>
+        <p class="subtitle">スプレッドシートに蓄積した温度・湿度・CO₂を、見やすく素早く確認できます。</p>
+      </div>
+      <div class="pill" id="statusPill" title="データ更新状況">
+        <span class="dot" aria-hidden="true"></span>
+        <span id="statusText">読み込み中...</span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="controls">
+        <div class="control-group grid-span-4">
+          <label for="preset">表示範囲（プリセット）</label>
+          <select id="preset">
+            <option value="30m">30分前</option>
+            <option value="1h" selected>1時間前</option>
+            <option value="3h">3時間前</option>
+            <option value="6h">6時間前</option>
+            <option value="12h">12時間前</option>
+            <option value="1d">1日前</option>
+            <option value="3d">3日前</option>
+            <option value="1w">1週間前</option>
+            <option value="1mo">1ヶ月前</option>
+            <option value="1y">1年前</option>
+          </select>
+        </div>
+
+        <div class="control-group grid-span-3">
+          <label for="refreshMinutes">更新間隔（分）</label>
+          <input id="refreshMinutes" type="number" min="1" step="1" value="3" />
+        </div>
+
+        <div class="control-group grid-span-3">
+          <label for="customMode">範囲指定</label>
+          <div class="toggle">
+            <input id="customMode" type="checkbox" />
+            <span>日時範囲を指定する</span>
+          </div>
+        </div>
+
+        <div class="control-group grid-span-3">
+          <label for="startIso">開始日時</label>
+          <input id="startIso" type="datetime-local" disabled />
+        </div>
+
+        <div class="control-group grid-span-3">
+          <label for="endIso">終了日時</label>
+          <input id="endIso" type="datetime-local" disabled />
+        </div>
+
+        <div class="control-group grid-span-3">
+          <label>&nbsp;</label>
+          <button id="refreshButton" type="button">今すぐ更新</button>
+        </div>
+      </div>
+      <p class="hint">ヒント: 「範囲指定」をONにして開始・終了を選ぶと、その期間だけに絞って表示できます。</p>
+    </div>
+
+    <div class="kpis" aria-label="最新値">
+      <div class="kpi grid-span-4">
+        <p class="kpi-label">温度</p>
+        <div class="kpi-value">
+          <span id="kpiTempValue">—</span><span class="kpi-unit">℃</span>
+        </div>
+        <p class="kpi-meta" id="kpiTempMeta">—</p>
+      </div>
+      <div class="kpi grid-span-4">
+        <p class="kpi-label">湿度</p>
+        <div class="kpi-value">
+          <span id="kpiHumValue">—</span><span class="kpi-unit">%</span>
+        </div>
+        <p class="kpi-meta" id="kpiHumMeta">—</p>
+      </div>
+      <div class="kpi grid-span-4">
+        <p class="kpi-label">CO₂</p>
+        <div class="kpi-value">
+          <span id="kpiCo2Value">—</span><span class="kpi-unit">ppm</span>
+          <span id="kpiCo2Badge" class="kpi-badge">—</span>
+        </div>
+        <p class="kpi-meta" id="kpiCo2Meta">—</p>
+      </div>
+    </div>
+
+    <div class="graphs">
+      <div class="graph-card">
+        <div id="tempHumidityGraph" class="graph"></div>
+      </div>
+      <div class="graph-card">
+        <div id="co2Graph" class="graph"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let refreshTimerId = null;
+    const THEME = Object.freeze({
+      get css() {
+        return getComputedStyle(document.documentElement);
+      },
+      get fg() {
+        return this.css.getPropertyValue("--fg").trim() || "#111827";
+      },
+      get muted() {
+        return this.css.getPropertyValue("--muted").trim() || "#6b7280";
+      },
+      get grid() {
+        return this.css.getPropertyValue("--grid").trim() || "rgba(0,0,0,0.10)";
+      },
+      get accent() {
+        return this.css.getPropertyValue("--accent").trim() || "#7c3aed";
+      },
+      get accent2() {
+        return this.css.getPropertyValue("--accent2").trim() || "#22c55e";
+      },
+      get warn() {
+        return this.css.getPropertyValue("--warn").trim() || "#f59e0b";
+      },
+      get danger() {
+        return this.css.getPropertyValue("--danger").trim() || "#ef4444";
+      },
+    });
+
+    /**
+     * UIを初期化し、初回描画を行う。
+     */
+    function init() {
+      document.getElementById("customMode").addEventListener("change", onCustomModeChanged);
+      document.getElementById("refreshButton").addEventListener("click", refreshNow);
+      document.getElementById("refreshMinutes").addEventListener("change", resetAutoRefresh);
+      document.getElementById("preset").addEventListener("change", refreshNow);
+      document.getElementById("startIso").addEventListener("change", refreshNow);
+      document.getElementById("endIso").addEventListener("change", refreshNow);
+
+      onCustomModeChanged();
+      refreshNow();
+      resetAutoRefresh();
+    }
+
+    /**
+     * カスタム日時入力の有効/無効を切り替える。
+     */
+    function onCustomModeChanged() {
+      const enabled = document.getElementById("customMode").checked;
+      document.getElementById("startIso").disabled = !enabled;
+      document.getElementById("endIso").disabled = !enabled;
+      refreshNow();
+    }
+
+    /**
+     * GASへ渡すリクエストパラメータを作成する。
+     * @returns {{presetKey?: string, startIso?: string, endIso?: string}}
+     */
+    function buildRequestParams() {
+      const useCustom = document.getElementById("customMode").checked;
+      const startLocal = document.getElementById("startIso").value;
+      const endLocal = document.getElementById("endIso").value;
+
+      if (useCustom && startLocal && endLocal) {
+        return {
+          startIso: new Date(startLocal).toISOString(),
+          endIso: new Date(endLocal).toISOString(),
+        };
+      }
+
+      return {
+        presetKey: document.getElementById("preset").value,
+      };
+    }
+
+    /**
+     * データを取得してグラフを再描画する。
+     */
+    function refreshNow() {
+      setStatus("読み込み中...", "loading");
+      const params = buildRequestParams();
+
+      google.script.run
+        .withSuccessHandler((series) => {
+          drawCharts(series);
+          setStatus("更新完了: " + new Date().toLocaleString(), "ok");
+        })
+        .withFailureHandler((error) => {
+          setStatus("データ取得に失敗しました: " + error.message, "error");
+        })
+        .getReadings(params);
+    }
+
+    /**
+     * 自動更新タイマーを再設定する。
+     */
+    function resetAutoRefresh() {
+      if (refreshTimerId !== null) {
+        clearInterval(refreshTimerId);
+      }
+
+      const minutes = Math.max(1, Number(document.getElementById("refreshMinutes").value) || 3);
+      document.getElementById("refreshMinutes").value = String(minutes);
+      refreshTimerId = setInterval(refreshNow, minutes * 60 * 1000);
+    }
+
+    /**
+     * 温度・湿度・CO2グラフを描画する。
+     * @param {{timestamps:string[], temperature_c:number[], humidity_pct:number[], co2_ppm:number[]}} series
+     */
+    function drawCharts(series) {
+      const x = (series.timestamps || []).map((ts) => new Date(ts));
+      const temperature = series.temperature_c || [];
+      const humidity = series.humidity_pct || [];
+      const co2 = series.co2_ppm || [];
+
+      updateKpis(series);
+
+      const commonLayout = {
+        paper_bgcolor: "rgba(0,0,0,0)",
+        plot_bgcolor: "rgba(0,0,0,0)",
+        font: { color: THEME.fg, family: "Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial" },
+        xaxis: {
+          title: { text: "時刻", font: { color: THEME.muted } },
+          type: "date",
+          gridcolor: THEME.grid,
+          zerolinecolor: THEME.grid,
+          tickfont: { color: THEME.muted },
+        },
+        legend: { orientation: "h", y: 1.15, x: 0, font: { color: THEME.muted } },
+        margin: { t: 52, r: 48, b: 56, l: 56 },
+      };
+
+      Plotly.react(
+        "tempHumidityGraph",
+        [
+          {
+            x: x,
+            y: temperature,
+            type: "scatter",
+            mode: "lines",
+            name: "温度 (℃)",
+            yaxis: "y1",
+            line: { color: THEME.accent, width: 2.5 },
+          },
+          {
+            x: x,
+            y: humidity,
+            type: "scatter",
+            mode: "lines",
+            name: "湿度 (%)",
+            yaxis: "y2",
+            line: { color: THEME.accent2, width: 2.5 },
+          },
+        ],
+        {
+          ...commonLayout,
+          title: { text: "温度 / 湿度", x: 0.02, font: { size: 16, color: THEME.fg } },
+          yaxis: { title: { text: "温度 (℃)", font: { color: THEME.muted } }, gridcolor: THEME.grid, tickfont: { color: THEME.muted } },
+          yaxis2: {
+            title: { text: "湿度 (%)", font: { color: THEME.muted } },
+            overlaying: "y",
+            side: "right",
+            gridcolor: "rgba(0,0,0,0)",
+            tickfont: { color: THEME.muted },
+          },
+        },
+        { responsive: true, displaylogo: false }
+      );
+
+      Plotly.react(
+        "co2Graph",
+        [
+          {
+            x: x,
+            y: co2,
+            type: "scatter",
+            mode: "lines",
+            name: "CO2 (ppm)",
+            line: { color: THEME.warn, width: 2.5 },
+          },
+        ],
+        {
+          ...commonLayout,
+          title: { text: "CO₂", x: 0.02, font: { size: 16, color: THEME.fg } },
+          yaxis: { title: { text: "CO2 (ppm)", font: { color: THEME.muted } }, gridcolor: THEME.grid, tickfont: { color: THEME.muted } },
+          margin: { t: 52, r: 24, b: 56, l: 56 },
+        },
+        { responsive: true, displaylogo: false }
+      );
+    }
+
+    /**
+     * ステータスメッセージを更新する。
+     * @param {string} text 表示するメッセージ。
+     * @param {"loading"|"ok"|"error"} kind
+     */
+    function setStatus(text, kind = "ok") {
+      document.getElementById("statusText").textContent = text;
+      const dot = document.querySelector("#statusPill .dot");
+      if (!dot) return;
+      if (kind === "loading") {
+        dot.style.background = THEME.warn;
+        dot.style.boxShadow = "0 0 0 4px rgba(245, 158, 11, 0.18)";
+      } else if (kind === "error") {
+        dot.style.background = THEME.danger;
+        dot.style.boxShadow = "0 0 0 4px rgba(239, 68, 68, 0.18)";
+      } else {
+        dot.style.background = THEME.accent2;
+        dot.style.boxShadow = "0 0 0 4px rgba(34, 197, 94, 0.18)";
+      }
+    }
+
+    function updateKpis(series) {
+      const x = (series.timestamps || []).map((ts) => new Date(ts));
+      const temperature = series.temperature_c || [];
+      const humidity = series.humidity_pct || [];
+      const co2 = series.co2_ppm || [];
+
+      const lastIndex = Math.max(temperature.length, humidity.length, co2.length, x.length) - 1;
+      const lastTime = x[lastIndex] instanceof Date && !isNaN(x[lastIndex]) ? x[lastIndex] : null;
+      const timeText = lastTime ? lastTime.toLocaleString() : "—";
+
+      const tempVal = temperature[lastIndex];
+      const humVal = humidity[lastIndex];
+      const co2Val = co2[lastIndex];
+
+      document.getElementById("kpiTempValue").textContent = formatNumber(tempVal, 1);
+      document.getElementById("kpiHumValue").textContent = formatNumber(humVal, 0);
+      document.getElementById("kpiCo2Value").textContent = formatNumber(co2Val, 0);
+
+      document.getElementById("kpiTempMeta").textContent = `最新: ${timeText}`;
+      document.getElementById("kpiHumMeta").textContent = `最新: ${timeText}`;
+      document.getElementById("kpiCo2Meta").textContent = `最新: ${timeText}`;
+
+      const badge = document.getElementById("kpiCo2Badge");
+      const { label, cls } = classifyCo2(co2Val);
+      badge.textContent = label;
+      badge.classList.remove("ok", "warn", "bad");
+      if (cls) badge.classList.add(cls);
+    }
+
+    function formatNumber(value, digits) {
+      if (value === null || value === undefined || Number.isNaN(Number(value))) return "—";
+      const n = Number(value);
+      return n.toLocaleString(undefined, { maximumFractionDigits: digits, minimumFractionDigits: digits });
+    }
+
+    /**
+     * CO2の目安 (一般的な指標):
+     * - 0-1000ppm: 良好
+     * - 1000-1500ppm: 注意
+     * - 1500ppm以上: 換気推奨
+     */
+    function classifyCo2(value) {
+      const n = Number(value);
+      if (!isFinite(n)) return { label: "—", cls: "" };
+      if (n < 1000) return { label: "良好", cls: "ok" };
+      if (n < 1500) return { label: "注意", cls: "warn" };
+      return { label: "換気", cls: "bad" };
+    }
+
+    init();
+  </script>
+</body>
+
+</html>
